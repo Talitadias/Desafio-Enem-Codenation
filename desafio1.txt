@@ -1,0 +1,117 @@
+#####Lendo arquivo csv#####
+treino<-read.csv("C:/Users/Alex/Documents/Cursos/Codenation/train.csv")
+View(treino)
+names(treino)
+
+#Apresenta a estrutura do DataFrame
+str(treino)
+
+#selecionando as variÃ¡veis numÃ©ricas do banco
+install.packages("microbenchmark")
+library(microbenchmark)
+
+treinon=Filter(is.numeric,treino)
+View(treinon)
+str(treinon)
+
+summary(treinon)
+
+#######
+#observa-se que tem missings em algumas variaveis. além disso vou no dicionario e vejo quais as vas numericas que podem influenciar na nota de matematica.
+#######
+
+#pre-processamento dos dados(vou retirar os missings)
+
+treino=treino[!is.na(treino$NU_NOTA_CN),]
+
+treino=treino[!is.na(treino$NU_NOTA_CH),]
+
+treino=treino[!is.na(treino$NU_NOTA_LC),]
+
+treino=treino[!is.na(treino$NU_NOTA_MT),]
+
+treino=treino[!is.na(treino$NU_NOTA_COMP1),]
+
+treino=treino[!is.na(treino$NU_NOTA_COMP2),]
+
+treino=treino[!is.na(treino$NU_NOTA_COMP3),]
+
+treino=treino[!is.na(treino$NU_NOTA_COMP4),]
+
+treino=treino[!is.na(treino$NU_NOTA_COMP5),]
+
+treino=treino[!is.na(treino$NU_NOTA_REDACAO),]
+
+summary(treino)
+
+#manipulacao do dados(criando um banco para as vas escolhidas para o modelo)
+install.packages("dplyr")
+library(dplyr)
+
+
+A=select(treino,NU_IDADE,NU_NOTA_CN,NU_NOTA_CH,NU_NOTA_LC,NU_NOTA_MT,NU_NOTA_COMP1,NU_NOTA_COMP2,NU_NOTA_COMP3,NU_NOTA_COMP4,NU_NOTA_COMP5,NU_NOTA_REDACAO)
+View(A)
+summary(A)
+
+#matrizcorrelação
+cor(A)
+
+####
+#Pela matriz de correlacao duas vas tem relação moderada com a nota em matemática,
+#são elas (NU_NOTA_CN,NU_NOTA_LC).
+####
+
+#vou selecionar as vas pelo método stepwise 
+
+modelo = lm(NU_NOTA_MT ~ NU_IDADE + NU_NOTA_CN +  NU_NOTA_CH + NU_NOTA_LC+NU_NOTA_COMP1+NU_NOTA_COMP2+NU_NOTA_COMP3+NU_NOTA_COMP4+NU_NOTA_COMP5+NU_NOTA_REDACAO, data=treino)
+summary(modelo)
+
+stepwise <- step(modelo,direction="both") 
+summary(stepwise)
+
+
+
+
+
+
+#abrindo o arquivo teste(validacao)
+test<-read.csv("C:/Users/Alex/Documents/Cursos/Codenation/test.csv")
+summary(test)
+View(test)
+names(test)
+
+#pre processamento do arquivo test
+test[!is.na(test$NU_NOTA_CN),]
+
+test[!is.na(test$NU_NOTA_CH),]
+
+test=test[!is.na(test$NU_NOTA_LC),]
+
+test=test[!is.na(test$NU_NOTA_COMP1),]
+
+test=test[!is.na(test$NU_NOTA_COMP2),]
+
+test=test[!is.na(test$NU_NOTA_COMP3),]
+
+test=test[!is.na(test$NU_NOTA_COMP4),]
+
+test=test[!is.na(test$NU_NOTA_COMP5),]
+
+test=test[!is.na(test$NU_NOTA_REDACAO),]
+
+summary(test)
+
+#Faz a previsão para a base test(validacao) 
+NU_NOTA_MT<-predict(stepwise,test)
+
+NU_NOTA_MT=format(round(NU_NOTA_MT, 2), nsmall = 2)
+#transformando em banco para exportar
+
+answers=data.frame(test$NU_INSCRICAO,NU_NOTA_MT)
+View(answers)
+
+colnames(answers)[1]<-'NU_INSCRICAO'
+
+
+write.csv(answers,file = "answer.csv")
+getwd()
